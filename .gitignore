@@ -1,0 +1,27 @@
+# Build output
+/target/
+
+# IDE files
+/.idea/
+*.iml
+
+# Local/private configuration
+/config/application-local.yml
+/config/*.local.yml
+/config/*secret*.yml
+/config/*private*.yml
+/src/main/resources/application-local.yml
+/src/main/resources/application-*.local.yml
+.env
+.env.*
+!.env.example
+
+# Local notes may contain environment details or historical secrets
+/src/开发记录.md
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db

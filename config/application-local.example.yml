@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/petshop?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: your_database_password
+
+wx:
+  miniapp:
+    appid: your_wechat_miniapp_appid
+    secret: your_wechat_miniapp_secret
