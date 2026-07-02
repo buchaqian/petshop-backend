@@ -1,6 +1,13 @@
 # Petshop Backend
 
-宠物粮食销售微信小程序后端服务，基于 Spring Boot 3、MyBatis-Plus、MySQL 和 Sa-Token 构建。项目提供用户端购物流程、店主管理后台、订单管理、地址管理、分销商申请与佣金统计等核心接口。
+[![CI](https://github.com/buchaqian/petshop-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/buchaqian/petshop-backend/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Petshop Backend 是一个宠物粮食销售微信小程序后端服务，基于 Spring Boot 3、MyBatis-Plus、MySQL 和 Sa-Token 构建。项目覆盖用户端购物流程、店主管理后台、订单管理、地址管理、分销商申请与佣金统计等核心接口。
+
+## Project Status
+
+这个仓库正在持续开源化和完善中。目前已经包含主要业务接口、数据库初始化脚本、本地配置隔离、开源协作文件和 GitHub Actions CI。后续重点包括补充自动化测试、完善部署说明、改进接口文档和加强安全检查。
 
 ## Features
 
@@ -72,7 +79,7 @@ SA_TOKEN_TIMEOUT
 
 ## Database
 
-Initialize the database with:
+Create a MySQL database named `petshop`, then initialize it with:
 
 ```bash
 mysql --default-character-set=utf8mb4 -u root -p petshop < src/main/resources/sql/init.sql
@@ -84,7 +91,7 @@ If table comments are displayed incorrectly in your database client, run:
 mysql --default-character-set=utf8mb4 -u root -p petshop < src/main/resources/sql/fix_comments.sql
 ```
 
-## Run
+## Run Locally
 
 ```bash
 mvn spring-boot:run
@@ -111,6 +118,24 @@ http://localhost:8089/api/doc.html
 - `/api/admin/distributor/**` admin distributor review APIs
 - `/api/admin/statistics/**` admin statistics APIs
 
-## Security Notes
+## Security
 
 Do not commit real database passwords, WeChat Mini Program secrets, production tokens, or deployment credentials. Keep local secrets in ignored configuration files or environment variables.
+
+Security-sensitive areas include login, admin authorization, user-scoped resources, order state transitions, commission logic, and local configuration handling. See [SECURITY.md](SECURITY.md) for reporting guidance.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+Useful contribution areas:
+
+- Add automated tests
+- Improve API documentation
+- Harden permission checks and parameter validation
+- Improve deployment instructions
+- Review order and distribution business logic
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
