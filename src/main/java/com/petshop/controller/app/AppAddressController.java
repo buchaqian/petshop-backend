@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "用户端-收货地址")
+@Tag(name = "App address APIs")
 @RestController
 @RequestMapping("/app/address")
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ public class AppAddressController {
 
     private final AddressMapper addressMapper;
 
-    @Operation(summary = "获取地址列表")
+    @Operation(summary = "List addresses")
     @GetMapping("/list")
     public Result<List<Address>> list() {
         Long userId = StpUtil.getLoginIdAsLong();
@@ -28,56 +28,78 @@ public class AppAddressController {
                 new LambdaQueryWrapper<Address>().eq(Address::getUserId, userId)));
     }
 
-    @Operation(summary = "新增地址")
+    @Operation(summary = "Add address")
     @PostMapping("/add")
     public Result<Void> add(@RequestBody Address address) {
         Long userId = StpUtil.getLoginIdAsLong();
+        if (address == null) {
+            throw new IllegalArgumentException("Address body is required");
+        }
+
+        address.setId(null);
         address.setUserId(userId);
-        // 如果设为默认，先清除其他默认
-        if (address.getIsDefault() != null && address.getIsDefault() == 1) {
+        if (isDefault(address)) {
             clearDefault(userId);
         }
+
         addressMapper.insert(address);
         return Result.success();
     }
 
-    @Operation(summary = "编辑地址")
+    @Operation(summary = "Update address")
     @PostMapping("/update")
     public Result<Void> update(@RequestBody Address address) {
         Long userId = StpUtil.getLoginIdAsLong();
-        Address existing = addressMapper.selectById(address.getId());
-        if (existing == null || !existing.getUserId().equals(userId)) {
-            throw new RuntimeException("地址不存在");
+        if (address == null || address.getId() == null) {
+            throw new IllegalArgumentException("Address id is required");
         }
-        if (address.getIsDefault() != null && address.getIsDefault() == 1) {
+
+        Address existing = requireOwnedAddress(address.getId(), userId);
+        address.setUserId(userId);
+        if (isDefault(address)) {
             clearDefault(userId);
+        } else if (address.getIsDefault() == null) {
+            address.setIsDefault(existing.getIsDefault());
         }
+
         addressMapper.updateById(address);
         return Result.success();
     }
 
-    @Operation(summary = "删除地址")
+    @Operation(summary = "Delete address")
     @PostMapping("/delete")
     public Result<Void> delete(@RequestParam Long id) {
         Long userId = StpUtil.getLoginIdAsLong();
-        Address existing = addressMapper.selectById(id);
-        if (existing == null || !existing.getUserId().equals(userId)) {
-            throw new RuntimeException("地址不存在");
-        }
+        requireOwnedAddress(id, userId);
         addressMapper.deleteById(id);
         return Result.success();
     }
 
-    @Operation(summary = "设为默认地址")
+    @Operation(summary = "Set default address")
     @PostMapping("/setDefault")
     public Result<Void> setDefault(@RequestParam Long id) {
         Long userId = StpUtil.getLoginIdAsLong();
+        requireOwnedAddress(id, userId);
+
         clearDefault(userId);
         Address address = new Address();
         address.setId(id);
+        address.setUserId(userId);
         address.setIsDefault(1);
         addressMapper.updateById(address);
         return Result.success();
+    }
+
+    private Address requireOwnedAddress(Long id, Long userId) {
+        Address existing = addressMapper.selectById(id);
+        if (existing == null || !userId.equals(existing.getUserId())) {
+            throw new IllegalArgumentException("Address does not exist");
+        }
+        return existing;
+    }
+
+    private boolean isDefault(Address address) {
+        return Integer.valueOf(1).equals(address.getIsDefault());
     }
 
     private void clearDefault(Long userId) {

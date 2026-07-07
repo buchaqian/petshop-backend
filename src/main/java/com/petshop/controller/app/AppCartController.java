@@ -16,9 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-@Tag(name = "用户端-购物车")
+@Tag(name = "App cart APIs")
 @RestController
 @RequestMapping("/app/cart")
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class AppCartController {
     private final ProductMapper productMapper;
     private final ProductSpecMapper productSpecMapper;
 
-    @Operation(summary = "获取购物车列表")
+    @Operation(summary = "List cart items")
     @GetMapping("/list")
     public Result<List<CartVO>> list() {
         Long userId = StpUtil.getLoginIdAsLong();
@@ -50,6 +51,7 @@ public class AppCartController {
                 vo.setPrice(product.getPrice());
                 vo.setStock(product.getStock());
             }
+
             if (cart.getSpecId() != null) {
                 ProductSpec spec = productSpecMapper.selectById(cart.getSpecId());
                 if (spec != null) {
@@ -64,21 +66,26 @@ public class AppCartController {
         return Result.success(voList);
     }
 
-    @Operation(summary = "加入购物车")
+    @Operation(summary = "Add cart item")
     @PostMapping("/add")
     public Result<Void> add(@RequestParam Long productId,
                             @RequestParam(required = false) Long specId,
                             @RequestParam(defaultValue = "1") Integer quantity) {
         Long userId = StpUtil.getLoginIdAsLong();
+        validateQuantity(quantity);
 
-        // 查是否已存在
-        Cart existing = cartMapper.selectOne(new LambdaQueryWrapper<Cart>()
-                .eq(Cart::getUserId, userId)
-                .eq(Cart::getProductId, productId)
-                .eq(specId != null, Cart::getSpecId, specId));
+        Product product = requireActiveProduct(productId);
+        ProductSpec spec = specId == null ? null : requireProductSpec(productId, specId);
+
+        Cart existing = cartMapper.selectOne(cartKeyWrapper(userId, productId, specId));
+        int newQuantity = quantity;
+        if (existing != null && existing.getQuantity() != null) {
+            newQuantity += existing.getQuantity();
+        }
+        validateStock(resolveStock(product, spec), newQuantity);
 
         if (existing != null) {
-            existing.setQuantity(existing.getQuantity() + quantity);
+            existing.setQuantity(newQuantity);
             cartMapper.updateById(existing);
         } else {
             Cart cart = new Cart();
@@ -91,32 +98,87 @@ public class AppCartController {
         return Result.success();
     }
 
-    @Operation(summary = "更新购物车数量")
+    @Operation(summary = "Update cart item quantity")
     @PostMapping("/update")
     public Result<Void> update(@RequestParam Long id, @RequestParam Integer quantity) {
         Long userId = StpUtil.getLoginIdAsLong();
-        Cart cart = cartMapper.selectById(id);
-        if (cart == null || !cart.getUserId().equals(userId)) {
-            throw new RuntimeException("购物车记录不存在");
+        Cart cart = requireOwnedCart(id, userId);
+
+        if (quantity == null) {
+            throw new IllegalArgumentException("Quantity is required");
         }
         if (quantity <= 0) {
             cartMapper.deleteById(id);
-        } else {
-            cart.setQuantity(quantity);
-            cartMapper.updateById(cart);
+            return Result.success();
         }
+
+        Product product = requireActiveProduct(cart.getProductId());
+        ProductSpec spec = cart.getSpecId() == null ? null : requireProductSpec(cart.getProductId(), cart.getSpecId());
+        validateStock(resolveStock(product, spec), quantity);
+
+        cart.setQuantity(quantity);
+        cartMapper.updateById(cart);
         return Result.success();
     }
 
-    @Operation(summary = "删除购物车商品")
+    @Operation(summary = "Delete cart item")
     @PostMapping("/delete")
     public Result<Void> delete(@RequestParam Long id) {
         Long userId = StpUtil.getLoginIdAsLong();
-        Cart cart = cartMapper.selectById(id);
-        if (cart == null || !cart.getUserId().equals(userId)) {
-            throw new RuntimeException("购物车记录不存在");
-        }
+        requireOwnedCart(id, userId);
         cartMapper.deleteById(id);
         return Result.success();
+    }
+
+    private LambdaQueryWrapper<Cart> cartKeyWrapper(Long userId, Long productId, Long specId) {
+        LambdaQueryWrapper<Cart> wrapper = new LambdaQueryWrapper<Cart>()
+                .eq(Cart::getUserId, userId)
+                .eq(Cart::getProductId, productId);
+        if (specId == null) {
+            wrapper.isNull(Cart::getSpecId);
+        } else {
+            wrapper.eq(Cart::getSpecId, specId);
+        }
+        return wrapper;
+    }
+
+    private Cart requireOwnedCart(Long id, Long userId) {
+        Cart cart = cartMapper.selectById(id);
+        if (cart == null || !userId.equals(cart.getUserId())) {
+            throw new IllegalArgumentException("Cart item does not exist");
+        }
+        return cart;
+    }
+
+    private Product requireActiveProduct(Long productId) {
+        Product product = productMapper.selectById(productId);
+        if (product == null || !Integer.valueOf(1).equals(product.getStatus())) {
+            throw new IllegalArgumentException("Product does not exist or is not available");
+        }
+        return product;
+    }
+
+    private ProductSpec requireProductSpec(Long productId, Long specId) {
+        ProductSpec spec = productSpecMapper.selectById(specId);
+        if (spec == null || !Objects.equals(productId, spec.getProductId())) {
+            throw new IllegalArgumentException("Product spec does not exist");
+        }
+        return spec;
+    }
+
+    private Integer resolveStock(Product product, ProductSpec spec) {
+        return spec == null ? product.getStock() : spec.getStock();
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+    }
+
+    private void validateStock(Integer stock, Integer quantity) {
+        if (stock != null && quantity != null && quantity > stock) {
+            throw new IllegalArgumentException("Insufficient stock");
+        }
     }
 }
