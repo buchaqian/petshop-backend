@@ -1,14 +1,18 @@
 # Contributing
 
-感谢你关注 Petshop Backend。这个项目目前由维护者持续整理和开源化，欢迎通过 issue 或 pull request 参与改进。
+Thank you for your interest in Petshop Backend. This project is being maintained as an open-source reference implementation for a small WeChat Mini Program commerce backend.
 
 ## What to Contribute
 
-- 修复接口 bug、权限边界问题或参数校验问题
-- 补充单元测试、集成测试或接口测试
-- 改进 README、部署说明和 API 文档
-- 优化订单、购物车、地址、分销佣金和管理端统计逻辑
-- 报告安全风险，但请不要在公开 issue 中披露可利用细节
+Good contribution areas include:
+
+- Fix API bugs, authorization boundaries, or validation issues.
+- Add unit tests, integration tests, or API tests.
+- Improve README, deployment notes, and API documentation.
+- Improve order, cart, address, distributor, commission, and admin statistics logic.
+- Report security risks privately through the security process.
+
+Please do not disclose exploitable vulnerability details in public issues.
 
 ## Development Setup
 
