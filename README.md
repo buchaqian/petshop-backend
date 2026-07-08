@@ -106,6 +106,8 @@ If table comments are displayed incorrectly in your database client, run:
 mysql --default-character-set=utf8mb4 -u root -p petshop < src/main/resources/sql/fix_comments.sql
 ```
 
+For existing databases, apply incremental scripts from `src/main/resources/sql/migrations` in filename order.
+
 ## Run Locally
 
 ```bash

@@ -1,7 +1,12 @@
 package com.petshop.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -14,6 +19,7 @@ public class OrderItem {
 
     private Long orderId;
     private Long productId;
+    private Long specId;
     private String productName;
     private String productImage;
     private String specName;

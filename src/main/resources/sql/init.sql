@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '明细ID',
     `order_id` BIGINT NOT NULL COMMENT '订单ID',
     `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `spec_id` BIGINT DEFAULT NULL COMMENT '规格ID',
     `product_name` VARCHAR(100) NOT NULL COMMENT '商品名称（快照）',
     `product_image` VARCHAR(255) DEFAULT NULL COMMENT '商品图片（快照）',
     `spec_name` VARCHAR(50) DEFAULT NULL COMMENT '规格名称（快照）',
